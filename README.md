@@ -126,10 +126,33 @@ GitHub: https://github.com/Alex-Wang66/Financial_Fraud_Detection_Agent
 - 总资产、总负债、股东权益
 - 自由现金流
 
-**支持的LLM后端**:
-- 🚀 **Mock** - 本地模拟，开箱即用
-- ⚡ **Spark** - 讯飞Spark LLM
-- 🤖 **OpenAI** - OpenAI GPT
+### 6. 真实数据获取（第一部分 - 数据获取层）
+
+**DataFetcher** 模块（500+行代码）从真实数据源获取财务数据：
+
+**支持的数据源**:
+- 🏛️ **SEC EDGAR Database** - 美国证券交易委员会官方数据库，获取完整的财务报表
+- 📰 **NEWSAPI** - 实时新闻数据和市场舆论
+- 📋 **SEC Filings Metadata** - 监管文件信息
+
+**完整的三部分数据架构**:
+
+```
+第一部分：数据获取 (SEC EDGAR + NewsAPI)
+    ├─ 收入报表、资产负债表、现金流量表
+    ├─ 公司新闻和舆论
+    └─ SEC Filing元数据
+         ↓
+第二部分：数据格式化 (KeyIndicatorExtractor)
+    ├─ 标准化财务指标
+    ├─ 新闻情感分析
+    └─ 生成ExtractedIndicators
+         ↓
+第三部分：分析 (AnalysisPipeline)
+    ├─ 计算财务比率
+    ├─ 异常检测
+    └─ 生成分析报告
+```
 
 ### 6. 异常检测与风险等级
 
