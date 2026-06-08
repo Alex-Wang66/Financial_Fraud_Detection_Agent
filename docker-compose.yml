@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  fraud-detection-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fraud-detection-api
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=src/fraud_detection/api/app.py
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./logs:/app/logs
+      - ./reports:/app/reports
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Add a reverse proxy (nginx)
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: fraud-detection-nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./logs:/var/log/nginx
+  #   depends_on:
+  #     - fraud-detection-api
+  #   restart: unless-stopped
+
+volumes:
+  fraud-detection-data:
+    driver: local
