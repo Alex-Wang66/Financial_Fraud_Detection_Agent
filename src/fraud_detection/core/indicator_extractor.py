@@ -1,6 +1,12 @@
 """
-Key Indicators Extractor using LLM
-关键指标提取模块（使用LLM智能提取）
+Key Indicators Extractor
+关键指标提取模块 - 支持三种数据源：
+
+1. OpenBB SDK + FMP API - 真实财务数据
+2. NEWSAPI - 实时新闻和舆论
+3. LLM智能提取 - 自然语言处理
+
+集成来自本地Notebook的三大部分数据获取方式
 """
 
 import logging
@@ -9,6 +15,7 @@ import re
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 

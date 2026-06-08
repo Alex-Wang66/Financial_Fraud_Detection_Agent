@@ -5,6 +5,7 @@ Fraud Detection Core Module
 from .financial_metrics import FinancialMetricsCalculator
 from .anomaly_detector import AnomalyDetector
 from .report_generator import ReportGenerator
+from .data_fetcher import DataFetcher, fetch_financial_report
 from .indicator_extractor import (
     KeyIndicatorExtractor,
     ExtractedIndicators,
@@ -18,6 +19,8 @@ __all__ = [
     'FinancialMetricsCalculator',
     'AnomalyDetector',
     'ReportGenerator',
+    'DataFetcher',
+    'fetch_financial_report',
     'KeyIndicatorExtractor',
     'ExtractedIndicators',
     'ExtractorBackend',

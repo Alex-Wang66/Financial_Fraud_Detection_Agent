@@ -8,6 +8,8 @@ from .core import (
     ReportGenerator,
     AnalysisPipeline,
     run_fraud_detection,
+    DataFetcher,
+    fetch_financial_report,
     KeyIndicatorExtractor,
     ExtractedIndicators,
     ExtractorBackend,
@@ -15,7 +17,7 @@ from .core import (
     extract_from_dict
 )
 
-__version__ = '2.0.0'
+__version__ = '2.0.2'
 __author__ = 'Alex Wang'
 
 __all__ = [
@@ -24,6 +26,8 @@ __all__ = [
     'ReportGenerator',
     'AnalysisPipeline',
     'run_fraud_detection',
+    'DataFetcher',
+    'fetch_financial_report',
     'KeyIndicatorExtractor',
     'ExtractedIndicators',
     'ExtractorBackend',
