@@ -7,7 +7,12 @@ from .core import (
     AnomalyDetector,
     ReportGenerator,
     AnalysisPipeline,
-    run_fraud_detection
+    run_fraud_detection,
+    KeyIndicatorExtractor,
+    ExtractedIndicators,
+    ExtractorBackend,
+    extract_key_indicators,
+    extract_from_dict
 )
 
 __version__ = '2.0.0'
@@ -18,5 +23,10 @@ __all__ = [
     'AnomalyDetector',
     'ReportGenerator',
     'AnalysisPipeline',
-    'run_fraud_detection'
+    'run_fraud_detection',
+    'KeyIndicatorExtractor',
+    'ExtractedIndicators',
+    'ExtractorBackend',
+    'extract_key_indicators',
+    'extract_from_dict'
 ]

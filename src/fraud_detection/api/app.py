@@ -261,7 +261,173 @@ def calculate_fraud_score():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/api/docs', methods=['GET'])
+@app.route('/api/extract/indicators', methods=['POST'])
+def extract_indicators():
+    """
+    从财务报告文本中提取关键指标
+
+    Request JSON:
+    {
+        "text": "财务报告文本...",
+        "company_name": "公司名称",
+        "backend": "mock"  // 可选: mock, openai, spark
+    }
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'error': 'Request body is empty'}), BadRequest.code
+
+        if 'text' not in data:
+            return jsonify({'error': 'Missing required field: text'}), BadRequest.code
+
+        text = data['text']
+        company_name = data.get('company_name')
+        backend = data.get('backend', 'mock')
+
+        # 导入提取器
+        from fraud_detection.core import KeyIndicatorExtractor, ExtractorBackend
+
+        # 选择后端
+        try:
+            backend_enum = ExtractorBackend[backend.upper()]
+        except KeyError:
+            return jsonify({'error': f'Invalid backend: {backend}'}), BadRequest.code
+
+        # 执行提取
+        logger.info(f"Extracting indicators for {company_name}")
+        extractor = KeyIndicatorExtractor(backend=backend_enum)
+        indicators = extractor.extract_from_text(text, company_name)
+
+        return jsonify({
+            'success': True,
+            'company_name': company_name,
+            'indicators': indicators.to_dict(),
+            'confidence_score': indicators.confidence_score
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Extraction error: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+
+
+@app.route('/api/extract/indicators/batch', methods=['POST'])
+def extract_indicators_batch():
+    """
+    批量提取多个报告的关键指标
+
+    Request JSON:
+    {
+        "reports": [
+            {"text": "报告1文本...", "company_name": "公司A"},
+            {"text": "报告2文本...", "company_name": "公司B"}
+        ],
+        "backend": "mock"
+    }
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'reports' not in data:
+            return jsonify({'error': 'Missing required field: reports'}), BadRequest.code
+
+        reports = data['reports']
+        if not isinstance(reports, list) or len(reports) == 0:
+            return jsonify({'error': 'reports must be a non-empty list'}), BadRequest.code
+
+        backend = data.get('backend', 'mock')
+
+        # 导入提取器
+        from fraud_detection.core import KeyIndicatorExtractor, ExtractorBackend
+
+        # 选择后端
+        try:
+            backend_enum = ExtractorBackend[backend.upper()]
+        except KeyError:
+            return jsonify({'error': f'Invalid backend: {backend}'}), BadRequest.code
+
+        # 执行批量提取
+        logger.info(f"Batch extracting indicators for {len(reports)} reports")
+        extractor = KeyIndicatorExtractor(backend=backend_enum)
+
+        results = []
+        for report in reports:
+            text = report.get('text')
+            company_name = report.get('company_name')
+
+            if not text:
+                results.append({
+                    'success': False,
+                    'company_name': company_name,
+                    'error': 'Missing text field'
+                })
+                continue
+
+            try:
+                indicators = extractor.extract_from_text(text, company_name)
+                results.append({
+                    'success': True,
+                    'company_name': company_name,
+                    'indicators': indicators.to_dict(),
+                    'confidence_score': indicators.confidence_score
+                })
+            except Exception as e:
+                logger.error(f"Error extracting {company_name}: {str(e)}")
+                results.append({
+                    'success': False,
+                    'company_name': company_name,
+                    'error': str(e)
+                })
+
+        return jsonify({
+            'success': True,
+            'total': len(reports),
+            'successful': sum(1 for r in results if r.get('success')),
+            'results': results
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Batch extraction error: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+
+
+@app.route('/api/extract/indicators/structured', methods=['POST'])
+def extract_indicators_from_structure():
+    """
+    从结构化财务数据中提取指标
+
+    Request JSON:
+    {
+        "financial_data": {
+            "revenue": 1000000,
+            "net_income": 100000,
+            ...
+        }
+    }
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'financial_data' not in data:
+            return jsonify({'error': 'Missing required field: financial_data'}), BadRequest.code
+
+        financial_data = data['financial_data']
+
+        from fraud_detection.core import KeyIndicatorExtractor
+
+        extractor = KeyIndicatorExtractor()
+        indicators = extractor.extract_from_structured_data(financial_data)
+
+        return jsonify({
+            'success': True,
+            'indicators': indicators.to_dict(),
+            'confidence_score': indicators.confidence_score
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Structured extraction error: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 def api_docs():
     """API文档"""
     docs = """
@@ -352,6 +518,157 @@ def api_docs():
     </html>
     """
     return render_template_string(docs)
+
+
+@app.route('/api/extract/indicators', methods=['POST'])
+def extract_indicators():
+    """
+    从财务报告文本中智能提取关键指标
+
+    Request JSON:
+    {
+        "text": "财务报告文本内容...",
+        "company_name": "公司名称",
+        "backend": "mock"  // 可选: mock, openai, spark
+    }
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'error': 'Request body is empty'}), BadRequest.code
+
+        if 'text' not in data:
+            return jsonify({'error': 'Missing required field: text'}), BadRequest.code
+
+        text = data['text']
+        company_name = data.get('company_name')
+        backend = data.get('backend', 'mock')
+
+        # 导入提取器
+        from fraud_detection.core import KeyIndicatorExtractor, ExtractorBackend
+
+        # 选择后端
+        try:
+            backend_enum = ExtractorBackend[backend.upper()]
+        except KeyError:
+            return jsonify({'error': f'Invalid backend: {backend}'}), BadRequest.code
+
+        # 执行提取
+        logger.info(f"Extracting indicators for {company_name}")
+        extractor = KeyIndicatorExtractor(backend=backend_enum)
+        indicators = extractor.extract_from_text(text, company_name)
+
+        return jsonify({
+            'success': True,
+            'company_name': company_name,
+            'indicators': indicators.to_dict(),
+            'confidence_score': indicators.confidence_score
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Extraction error: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+
+
+@app.route('/api/extract/indicators/batch', methods=['POST'])
+def extract_indicators_batch():
+    """
+    批量提取多个报告的关键指标
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'reports' not in data:
+            return jsonify({'error': 'Missing required field: reports'}), BadRequest.code
+
+        reports = data['reports']
+        if not isinstance(reports, list) or len(reports) == 0:
+            return jsonify({'error': 'reports must be a non-empty list'}), BadRequest.code
+
+        backend = data.get('backend', 'mock')
+
+        # 导入提取器
+        from fraud_detection.core import KeyIndicatorExtractor, ExtractorBackend
+
+        # 选择后端
+        try:
+            backend_enum = ExtractorBackend[backend.upper()]
+        except KeyError:
+            return jsonify({'error': f'Invalid backend: {backend}'}), BadRequest.code
+
+        # 执行批量提取
+        logger.info(f"Batch extracting indicators for {len(reports)} reports")
+        extractor = KeyIndicatorExtractor(backend=backend_enum)
+
+        results = []
+        for report in reports:
+            text = report.get('text')
+            company_name = report.get('company_name')
+
+            if not text:
+                results.append({
+                    'success': False,
+                    'company_name': company_name,
+                    'error': 'Missing text field'
+                })
+                continue
+
+            try:
+                indicators = extractor.extract_from_text(text, company_name)
+                results.append({
+                    'success': True,
+                    'company_name': company_name,
+                    'indicators': indicators.to_dict(),
+                    'confidence_score': indicators.confidence_score
+                })
+            except Exception as e:
+                logger.error(f"Error extracting {company_name}: {str(e)}")
+                results.append({
+                    'success': False,
+                    'company_name': company_name,
+                    'error': str(e)
+                })
+
+        return jsonify({
+            'success': True,
+            'total': len(reports),
+            'successful': sum(1 for r in results if r.get('success')),
+            'results': results
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Batch extraction error: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+
+
+@app.route('/api/extract/indicators/structured', methods=['POST'])
+def extract_indicators_from_structure():
+    """
+    从结构化财务数据中提取指标
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'financial_data' not in data:
+            return jsonify({'error': 'Missing required field: financial_data'}), BadRequest.code
+
+        financial_data = data['financial_data']
+
+        from fraud_detection.core import KeyIndicatorExtractor
+
+        extractor = KeyIndicatorExtractor()
+        indicators = extractor.extract_from_structured_data(financial_data)
+
+        return jsonify({
+            'success': True,
+            'indicators': indicators.to_dict(),
+            'confidence_score': indicators.confidence_score
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Structured extraction error: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 
 @app.errorhandler(400)
